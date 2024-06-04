@@ -96,6 +96,8 @@ local_base_url = "http://localhost:8080"
 param_api_options = [
     f"{local_base_url}/get_image_from_satellite_with_params",
     f"{cloud_base_url}/get_image_from_satellite_with_params",
+    f"{local_base_url}/get_image_from_satellite_with_params_self",
+    f"{cloud_base_url}/get_image_from_satellite_with_params_self"
 ]
 param_api_url = st.selectbox('API Selection', param_api_options)
 
@@ -103,7 +105,7 @@ if st.button("Test Input Sensitive API"):
     response = requests.get(url=param_api_url, params=params, timeout=60)
 
     segmented_image_list = response.json().get("segmented_image_list")
-    image_array = np.array(segmented_image_list, dtype=np.uint8)
+    image_array = np.array(segmented_image_list, dtype=np.uint8).reshape((512,512,1))
 
     original_image_array_list = response.json().get("original_image_list")
     original_image_array = np.array(original_image_array_list, dtype=np.float32).reshape((512, 512, 3))

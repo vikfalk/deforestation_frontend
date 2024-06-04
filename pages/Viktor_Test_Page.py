@@ -34,7 +34,7 @@ if 'forest_loss' not in st.session_state:
 st.set_page_config(
     page_title="Deforestation Tracker",
     page_icon="🌳",
-    layout="wide", 
+    layout="wide",
     initial_sidebar_state="collapsed"
 )
 
@@ -45,11 +45,11 @@ st.markdown("Track forest area change of a desired location by entering coordina
 input_col1, map_col, example_col = st.columns([4, 16, 2])
 with input_col1:
     with st.container(border = True, height = 510):
-    
+
         latitude_input = float(st.text_input('Latitude', '-8.49000'))
         longitude_input = float(st.text_input('Longitude', '-55.26000'))
-        
-        
+
+
         start_timeframe = st.date_input('Start date', dt.datetime(2021, 1, 1))
         end_timeframe = st.date_input('End date')
         factors = [1, 2, 3, 4, 5, 10, 25, 50, 100]
@@ -57,9 +57,9 @@ with input_col1:
         labels = {val: f"{val:.2f}" for val in square_size_options}
         default_value = square_size_options[0]
         square_size = 5.12
-        # square_size = st.select_slider('Square length (km)', 
-        #                             options=square_size_options, 
-        #                             value=default_value, 
+        # square_size = st.select_slider('Square length (km)',
+        #                             options=square_size_options,
+        #                             value=default_value,
         #                             format_func=lambda x: labels[x])
 
          #sample_number = st.slider('Number of samples', min_value=1, max_value=10)
@@ -75,88 +75,88 @@ with input_col1:
         }
         st.markdown('---')
 
-        
-        everything_api = "http://localhost:8080/do_everything"
-        if st.button("✨ Press for magic calculation ✨ "):   
+
+        everything_api = "http://localhost:8080/do_everything_self"
+        if st.button("✨ Press for magic calculation ✨ "):
             with st.spinner('Beep boop, contacting satellite :satellite_antenna:'):
-                
+
                 response = requests.get(url=everything_api, params=params, timeout=60)
                 #start Mask
                 start_mask_image_list = response.json().get("start_mask_image_list")
                 start_mask_image_array = np.array(start_mask_image_list, dtype=np.uint8)
                 start_mask_image = Image.fromarray(start_mask_image_array)
                 st.session_state.start_mask = start_mask_image_array
-                
+
                 #start Sat
                 start_sat_image_list = response.json().get("start_sat_image_list")
                 start_sat_image_array = np.array(start_sat_image_list, dtype=np.float32).reshape((512, 512, 3))
                 start_sat_image = Image.fromarray((start_sat_image_array * 255).astype(np.uint8)).convert('RGBA')
                 st.session_state.start_sat = start_sat_image_array
-            
+
                 # #rREPONSE WITH INFORMATION
 
                 #start vector
                 start_mask_vector = smooth_and_vectorize(start_mask_image_array, 9, '#307251', 0.4)
                 start_mask_vector = start_mask_vector.convert('RGBA')
                 st.session_state.start_vector_overlay = start_mask_vector
-                
+
                 #start overlay
                 start_mask_image_rgba = start_mask_image.convert('RGBA')
                 start_overlay = Image.alpha_composite(start_sat_image, start_mask_vector)
                 st.session_state.start_overlay = start_overlay
-                
+
 
                 # start metrics
                 start_forest_cover_percent = round(((np.count_nonzero(start_mask_image_array == 0) / start_mask_image_array.size) * 100), 1)
                 st.session_state.start_forest_cover_percent = start_forest_cover_percent
                 st.session_state.start_forest_cover_percent_int = int(start_forest_cover_percent)
-                
+
                 start_forest_cover_ha = ((start_forest_cover_percent/100)*26214400)/1000
                 st.session_state.start_forest_cover_ha = start_forest_cover_ha
 
-                
+
                 #End Mask
                 end_mask_image_list = response.json().get("end_mask_image_list")
                 end_mask_image_array = np.array(end_mask_image_list, dtype=np.uint8)
                 end_mask_image = Image.fromarray(end_mask_image_array)
                 st.session_state.end_mask = end_mask_image_array
-                
+
                 #End Sat
                 end_sat_image_list = response.json().get("end_sat_image_list")
                 end_sat_image_array = np.array(end_sat_image_list, dtype=np.float32).reshape((512, 512, 3))
                 end_sat_image = Image.fromarray((end_sat_image_array * 255).astype(np.uint8)).convert('RGBA')
                 st.session_state.end_sat = end_sat_image_array
-            
+
                 # #rREPONSE WITH INFORMATION
 
                 #End vector
                 end_mask_vector = smooth_and_vectorize(end_mask_image_array, 9, '#FF0000', 0.4)
                 end_mask_vector = end_mask_vector.convert('RGBA')
                 st.session_state.end_vector_overlay = end_mask_vector
-                
+
                 #End overlay
                 end_mask_image_rgba = end_mask_image.convert('RGBA')
                 end_overlay = Image.alpha_composite(end_sat_image, end_mask_vector)
                 st.session_state.end_overlay = end_overlay
-            
+
                 # End metrics
                 end_forest_cover_percent = round(((np.count_nonzero(end_mask_image_array == 0) / end_mask_image_array.size) * 100), 1)
                 st.session_state.end_forest_cover_percent = end_forest_cover_percent
                 st.session_state.end_forest_cover_percent_int = int(end_forest_cover_percent)
-                
+
                 end_forest_cover_ha = ((end_forest_cover_percent/100)* 26214400)/1000
                 st.session_state.end_forest_cover_ha = end_forest_cover_ha
-                
-                
+
+
                 #Total overlay
                 total_overlay = Image.alpha_composite(end_overlay, start_mask_vector)
                 st.session_state.total_overlay = total_overlay
-                
+
                 #Total metrics
                 total_deforestation = round(((end_forest_cover_percent/start_forest_cover_percent)*100),1)
                 st.session_state.total_deforestation = total_deforestation
-                
-                
+
+
                 #st.balloons()
 
 with example_col:
@@ -164,7 +164,7 @@ with example_col:
         size = 200
         light_red = [38, 39, 48]
         light_red_square = np.full((size, size, 3), light_red, dtype=np.uint8)
-        
+
         # Display example images inside the container
         st.image(light_red_square, caption="Brazil soy farm", width=115)
         st.image(light_red_square, caption="Peru palm farm", width=115)
@@ -195,8 +195,8 @@ polygon_data = [{
 
 # Convert end_mask_vector to pydeck polygon layer
 end_mask_polygon_layer = pdk.Layer(
-    "PolygonLayer", 
-    data=None, 
+    "PolygonLayer",
+    data=None,
     get_polygon=st.session_state.end_vector_overlay,
     get_line_color=[255, 0, 0, 255],  # Red color with full opacity for the border
     get_line_width=1,  # Width of the border
@@ -228,10 +228,10 @@ end_mask_vector = st.session_state.end_vector_overlay
 
 # # Create a BitmapLayer to overlay the PNG image on the map
 # bitmap_layer = pdk.Layer(
-#     "BitmapLayer", 
-#     data=None, 
-#     image=st.session_state.end_mask_png, 
-#     bounds=BOUNDS, 
+#     "BitmapLayer",
+#     data=None,
+#     image=st.session_state.end_mask_png,
+#     bounds=BOUNDS,
 #     opacity=0.5  # Adjust opacity as needed
 # )
 
@@ -250,21 +250,21 @@ with st.container(border=True):
     with sat_col:
         st.markdown("##### Start date")
         st.image(st.session_state.start_sat, caption= "Satellite Image")
-            
+
         st.markdown("##### End date")
         st.image(st.session_state.end_sat, caption= "Satellite Image")
-        
+
     with forest_col:
         st.markdown('<p style="color: #0F1116; ">filler</p>', unsafe_allow_html=True)
         st.image(st.session_state.start_overlay, caption= "Forest Area")
-        
+
         st.markdown('<p style="color: #0F1116; ">filler</p>', unsafe_allow_html=True)
         st.image(st.session_state.end_overlay, caption= "Forest Area")
-    
+
     with overlay_col:
         st.markdown('#### Total Forest Change')
         st.image(st.session_state.total_overlay)
-    
+
     with metrics_col:
         st.markdown('#### Metrics')
 
@@ -275,9 +275,9 @@ with st.container(border=True):
                         f'<p style="color: white; font-size: 24px; font-weight: bold; margin: 0; width: 80%;">{st.session_state.start_forest_cover_percent:.1f}%</p>'
                         '</div>', unsafe_allow_html=True)
             st.markdown(' ')
-            
+
             st.markdown('##### End date forest area')
-            
+
             st.markdown(f'<div style="display: flex; justify-content: left; align-items: center; background-color: #FF4B4B; border-radius: 10px; width: {st.session_state.end_forest_cover_percent_int}%; height: 50px; padding: 5px">'
                         f'<p style="color: white; font-size: 24px; font-weight: bold; margin: 0; width: 80%;">{st.session_state.end_forest_cover_percent:.1f}%</p>'
                         '</div>', unsafe_allow_html=True)
@@ -286,7 +286,7 @@ with st.container(border=True):
             st.markdown(
                     '<h3 style="color: white; font-size: 24px;">Total deforestation change</h3>'
                     '</div>', unsafe_allow_html=True)
-            
+
             st.markdown('<div style="display: flex; justify-content: center; align-items: center; background-color: #262630; border-radius: 10px; height: 100px; padding: 5px"; border>'
                     f'<p style="color: white; font-size: 50px; font-weight: bold; margin: 0;">- {st.session_state.total_deforestation}%</p>'
                     '</div>', unsafe_allow_html=True)
@@ -296,9 +296,9 @@ with st.container(border=True):
                         f'<p style="color: white; font-size: 24px; font-weight: bold; margin: 0; width: 80%;">{st.session_state.start_forest_cover_ha:.0f}</p>'
                         '</div>', unsafe_allow_html=True)
             st.markdown(' ')
-            
+
             st.markdown('##### End date forest area (thousand hectares)')
-            
+
             st.markdown(f'<div style="display: flex; justify-content: left; align-items: center; background-color: #FF4B4B; border-radius: 10px; width: {st.session_state.end_forest_cover_percent_int}%; height: 50px; padding: 5px">'
                         f'<p style="color: white; font-size: 24px; font-weight: bold; margin: 0; width: 80%;">{st.session_state.end_forest_cover_ha:.0f}</p>'
                         '</div>', unsafe_allow_html=True)
@@ -307,7 +307,7 @@ with st.container(border=True):
             st.markdown(
                     '<h3 style="color: white; font-size: 24px;">Total deforestation</h3>'
                     '</div>', unsafe_allow_html=True)
-            
+
             st.markdown('<div style="display: flex; justify-content: center; align-items: center; background-color: #262630; border-radius: 10px; height: 100px; padding: 5px"; border>'
                     f'<p style="color: white; font-size: 50px; font-weight: bold; margin: 0;">-{st.session_state.total_deforestation:.0f}k hectares</p>'
                     '</div>', unsafe_allow_html=True)
@@ -316,7 +316,7 @@ with st.container(border=True):
     # with overlay_col:
     #     st.markdown("#### Change in forest area")
     #     st.image('pages/final_overlay_image.png')
-        
+
     #     st.download_button('Download image', IMG_URL)
 
     # with metrics_col:
@@ -328,13 +328,13 @@ with st.container(border=True):
     #         st.markdown('<div style="display: flex; justify-content: left; align-items: center; background-color: green; border-radius: 10px; width: 350px; height: 70px; padding: 5px">'
     #                 '<p style="color: white; font-size: 36px; font-weight: bold; margin: 0;">5.12 ha</p>'
     #                 '</div>', unsafe_allow_html=True)
-            
+
     #         st.markdown("###")
-            
+
     #         st.markdown(
     #                 '<p style="color: white; font-size: 18px;">End data forest area</p>'
     #                 '</div>', unsafe_allow_html=True)
-            
+
     #         st.markdown('<div style="display: flex; justify-content: left; align-items: center; background-color: orange; border-radius: 10px; width: 150px; height: 70px; padding: 5px">'
     #                 '<p style="color: white; font-size: 36px; font-weight: bold; margin: 0;">2.11 ha</p>'
     #                 '</div>', unsafe_allow_html=True)
@@ -344,7 +344,7 @@ with st.container(border=True):
     #         st.markdown(
     #                 '<h3 style="color: white; font-size: 24px;">Total deforestation</h3>'
     #                 '</div>', unsafe_allow_html=True)
-            
+
     #         st.markdown('<div style="display: flex; justify-content: center; align-items: center; background-color: red; border-radius: 10px; height: 100px; padding: 5px">'
     #                 '<p style="color: white; font-size: 61px; font-weight: bold; margin: 0;">3.01 ha</p>'
     #                 '</div>', unsafe_allow_html=True)
@@ -365,7 +365,7 @@ with st.container(border=True):
     #     )
     #     m.add_basemap(basemap)
     #     m.to_streamlit(height=700)
-        
+
 
 
     # st.pydeck_chart(pdk.Deck(
@@ -392,9 +392,3 @@ with st.container(border=True):
     #     st.image("./images/before_resized.png", caption="Before")
     # with col2:
     #     st.image("./images/after_resized.png", caption="After")
-
-
-
-
-
-
